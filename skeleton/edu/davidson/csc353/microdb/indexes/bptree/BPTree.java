@@ -62,8 +62,14 @@ public class BPTree<K extends Comparable<K>, V> {
 	 * @return The value associated with the provided key.
 	 */
 	public V get(K key) {
-		// TODO ...
-		return null;
+	    leafNode = tbd
+    
+	    for (int i = 0; i < leafNode.keys.size(); i++) {
+	        if (leafNode.keys.get(i).equals(key)) {
+	            return leafNode.values.get(i);
+        }
+    }
+    return null;
 	}
 
 	/**
