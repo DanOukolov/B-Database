@@ -74,19 +74,32 @@ public class BPTree<K extends Comparable<K>, V> {
 
 	/**
 	 * Returns the leaf node where we should look for the provided key.
-	 * 
+	 *
 	 * @param node The current node in the recursive search procedure.
 	 * @param key The key being searched.
-	 * 
+	 *
 	 * @return The leaf node where we should look for the provided key.
 	 */
 	private BPNode<K,V> find(BPNode<K,V> node, K key) {
-		if(node.isLeaf()) {
-			return node;
-		}
-
-		// TODO ...
-		return null;
+	        while (!nodet.isLeaf()) {
+	            int i = 0;
+	            boolean found = false;
+	
+	            // Find the smallest index i such that key ≤ current.keys.get(i)
+	            while (i < node.keys.size() && key.compareTo(node.keys.get(i)) > 0) {
+	                i++;
+	            }
+	
+	            // Determine the next node to move to
+	            if (i < node.keys.size() && key.equals(node.keys.get(i))) {
+	                // Move to the node pointed by Pi+1 if key equals Ki
+	                node = nodeFactory.load(node.children.get(i + 1));
+	            } else {
+	                // Move to the node pointed by Pi if key is smaller than Ki, or if i is out of bounds
+	                node = nodeFactory.load(node.children.get(i));
+	            }
+	        }
+		return node;
 	}
 
 	/**
