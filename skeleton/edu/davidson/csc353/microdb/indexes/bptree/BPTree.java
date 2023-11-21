@@ -33,13 +33,39 @@ public class BPTree<K extends Comparable<K>, V> {
 	 */
 	public void insert(K key, V value) {
 		System.out.println("Inserting " + key);
+		// If tree is empty, create a new root node
+        if (rootNumber == -1) {
+            BPNode<K, V> rootNode = nodeFactory.create(true);  // Assuming true indicates a leaf node
+            rootNumber = rootNode.number;
+            insertInLeaf(rootNode, key, value);
+            return;
+        }
 
 		BPNode<K,V> insertPlace = find(nodeFactory.getNode(rootNumber), key);
 
+		if (insertPlace.keys.size() < BPNode.SIZE - 1) {
+            insertInLeaf(insertPlace, key, value);
+        } else {
+            // Handle node splitting
+            SplitResult<K, V> splitResult = splitLeafNode(insertPlace, key, value);
+            insertInParent(insertPlace, splitResult.dividerKey, splitResult.right);
+        }
+		
 		// TODO ...
 		
 		// Need to call insertOnParent after performing a leaf node split
 	}
+
+
+	private void insertInLeaf(BPNode<K, V> node, K key, V value) {
+        // Find the position to insert
+        int pos = 0;
+        while (pos < node.keys.size() && less(node.keys.get(pos), key)) {
+            pos++;
+        }
+        node.keys.add(pos, key);
+        node.values.add(pos, value);
+    }
 
 	/**
 	 * Insert on parent node a divider key after a child has been splitted.
@@ -83,7 +109,7 @@ public class BPTree<K extends Comparable<K>, V> {
 	 * @return The leaf node where we should look for the provided key.
 	 */
 	private BPNode<K,V> find(BPNode<K,V> node, K key) {
-	        while (!nodet.isLeaf()) {
+	        while (!node.isLeaf()) {
 	            int i = 0;
 	            boolean found = false;
 	
