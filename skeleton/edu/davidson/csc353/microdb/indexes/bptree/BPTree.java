@@ -48,12 +48,9 @@ public class BPTree<K extends Comparable<K>, V> {
         } else {
             // Handle node splitting
             SplitResult<K, V> splitResult = splitLeafNode(insertPlace, key, value);
-            insertInParent(insertPlace, splitResult.dividerKey, splitResult.right);
+            insertOnParent(insertPlace, splitResult.keyDivider, splitResult.right);
         }
 		
-		// TODO ...
-		
-		// Need to call insertOnParent after performing a leaf node split
 	}
 
 
@@ -74,10 +71,31 @@ public class BPTree<K extends Comparable<K>, V> {
 	 * @param key Divider key (according to the description in {@link SplitResult}.
 	 * @param right Right B+Tree node after a split has been made.
 	 */
-	private void insertOnParent(BPNode<K,V> left, K key, BPNode<K,V> right) {
-		// TODO ...
-					
-		// Need to keep calling insertOnParent after performing an internal node split
+	private void insertOnParent(BPNode<K,V> left, K keyDivider, BPNode<K,V> right) {
+		if (left.parent == -1) {
+			// N is the root, create a new root R containing N, K', N'
+			BPNode<K, V> newRoot = nodeFactory.create(false); // false indicates an internal node
+			newRoot.keys.add(keyDivider);
+			newRoot.children.add(left.number);
+			newRoot.children.add(right.number);
+			left.parent = newRoot.number;
+			right.parent = newRoot.number;
+			rootNumber = newRoot.number; // Update the root of the tree
+			return;
+		}
+		BPNode<K, V> parent = nodeFactory.load(left.parent);
+		// Find the position where the divider key should be inserted
+		int pos = parent.children.indexOf(left.number);
+		parent.keys.add(pos, keyDivider);
+		parent.children.add(pos + 1, right.number);
+		if (parent.keys.size() > BPNode.SIZE - 1) {
+			// Split P if it has more than n pointers
+			SplitResult<K, V> splitResult = splitInternalNode(parent);
+			insertOnParent(parent, splitResult.keyDivider, splitResult.right);
+		} else {
+			// Save the updated parent
+			nodeFactory.save(parent);
+		}
 	}
 
 	/**

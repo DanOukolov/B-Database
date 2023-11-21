@@ -164,16 +164,30 @@ public class BPNode<K extends Comparable<K>, V> {
 	 * 
 	 * @return A new {@link SplitResult} following the specifications above.
 	 */
-	public SplitResult<K,V> splitLeaf(BPNodeFactory<K,V> nodeFactory) {
+	public SplitResult<K, V> splitInternal(BPNodeFactory<K,V> nodeFactory) {
 		SplitResult<K,V> result = new SplitResult<>();
-
+	
 		result.left = this;
-		result.right = nodeFactory.create(true);
-
-		// TODO ...
-
+		result.right = nodeFactory.create(false); // Creating a new right node as an internal node
+	
+		// Finding the middle index for splitting keys and children
+		int middle = (this.keys.size() - 1) / 2;
+		K dividerKey = this.keys.get(middle);
+	
+		// Transferring the right half of keys and children to the new node
+		result.right.keys.addAll(this.keys.subList(middle + 1, this.keys.size()));
+		result.right.children.addAll(this.children.subList(middle + 1, this.children.size()));
+	
+		// Clearing the right half from the left node
+		this.keys.subList(middle, this.keys.size()).clear();
+		this.children.subList(middle + 1, this.children.size()).clear();
+	
+		// Updating the divider key in the result
+		result.dividerKey = dividerKey;
+	
 		return result;
 	}
+	
 
 	/**
 	 * Splits an overflowed leaf internal into a {@link SplitResult} object,
@@ -187,16 +201,33 @@ public class BPNode<K extends Comparable<K>, V> {
 	 * 
 	 * @return A new {@link SplitResult} following the specifications above.
 	 */
-	public SplitResult<K, V> splitInternal(BPNodeFactory<K,V> nodeFactory) {
+	public SplitResult<K,V> splitLeaf(BPNodeFactory<K,V> nodeFactory) {
 		SplitResult<K,V> result = new SplitResult<>();
-
+	
 		result.left = this;
-		result.right = nodeFactory.create(false);
-
-		// TODO ...
-
+		result.right = nodeFactory.create(true); // Creating a new right node as a leaf node
+	
+		// Finding the middle index for splitting the keys and values
+		int middle = this.keys.size() / 2;
+		K dividerKey = this.keys.get(middle);
+	
+		// Transferring the right half of keys and values to the new node
+		result.right.keys.addAll(this.keys.subList(middle, this.keys.size()));
+		result.right.values.addAll(this.values.subList(middle, this.values.size()));
+	
+		// Clearing the right half from the left node
+		this.keys.subList(middle, this.keys.size()).clear();
+		this.values.subList(middle, this.values.size()).clear();
+	
+		// Updating the divider key in the result
+		result.dividerKey = dividerKey;
+	
+		// Making the left node point to the right node in the "next" attribute
+		this.next = result.right.number;
+	
 		return result;
 	}
+	
 
 	/**
 	 * Returns a string representation of the B+Tree node.
