@@ -1,3 +1,8 @@
+/**
+ * Authors: John Matsudaira and Daniel Oukolov 
+ * Time Spent: 10 Hours
+ */
+
 package edu.davidson.csc353.microdb.indexes.bptree;
 
 import java.util.ArrayList;

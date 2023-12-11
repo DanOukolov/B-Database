@@ -1,3 +1,7 @@
+/**
+ * Authors: John Matsudaira and Daniel Oukolov 
+ * Time Spent: 10 Hours
+ */
 package edu.davidson.csc353.microdb.indexes.bptree;
 
 import java.nio.ByteBuffer;
@@ -277,12 +281,46 @@ public class BPNode<K extends Comparable<K>, V> {
 	 * @param loadKey A function that converts string representations into keys of type K
 	 * @param loadValue A function that converts string representations into values of type V
 	 */
-	public void load(ByteBuffer buffer, Function<String, K> loadKey, Function<String, V> loadValue) {
+	public void load(ByteBuffer buffer, BPNodeFactory<K, V> nodeFactory, Function<String, K> loadKey, Function<String, V> loadValue) {
 		buffer.rewind();
-
-		// TODO: Load from disk (that is, from the buffer), create your own file format
-		//       The getInt() and putInt() functions should be very helpful
+	
+		// Reading basic node properties
+		leaf = buffer.getInt() == 1;
+		parent = buffer.getInt();
+		next = buffer.getInt();
+		number = buffer.getInt();
+	
+		// Reading keys
+		int numKeys = buffer.getInt();
+		keys.clear();
+		for (int i = 0; i < numKeys; i++) {
+			int keyLength = buffer.getInt();
+			byte[] keyBytes = new byte[keyLength];
+			buffer.get(keyBytes);
+			K key = loadKey.apply(new String(keyBytes));
+			keys.add(key);
+		}
+	
+		if (leaf) {
+			int numValues = numKeys;
+			values.clear();
+			for (int i = 0; i < numValues; i++) {
+				int valueLength = buffer.getInt();
+				byte[] valueBytes = new byte[valueLength];
+				buffer.get(valueBytes);
+				V value = loadValue.apply(new String(valueBytes));
+				values.add(value);
+			}
+		} else {
+			int numChildren = numKeys + 1;
+			children.clear();
+			for (int i = 0; i < numChildren; i++) {
+				int child = buffer.getInt();
+				children.add(child);
+			}
+		}
 	}
+	
 
 	/**
 	 * Save the memory representation of the B+Tree node
@@ -290,11 +328,35 @@ public class BPNode<K extends Comparable<K>, V> {
 	 * 
 	 * @param buffer
 	 */
-	public void save(ByteBuffer buffer) {
+	public void save(ByteBuffer buffer, BPNodeFactory<K, V> nodeFactory) {
 		buffer.rewind();
-
-		// TODO: Save to disk (that is, to the buffer), create your own file format
-		//       The getInt() and putInt() functions should be very helpful
-		//       To save a string, generate it in memory, then use getBytes() and use the put() function in the buffer.
+	
+		// Writing basic node properties
+		buffer.putInt(leaf ? 1 : 0); // Leaf flag as 1 (true) or 0 (false)
+		buffer.putInt(parent);
+		buffer.putInt(next);
+		buffer.putInt(number);
+	
+		// Writing keys and values/children
+		buffer.putInt(keys.size()); // Number of keys
+		for (K key : keys) {
+			byte[] keyBytes = key.toString().getBytes();
+			buffer.putInt(keyBytes.length); // Length of key
+			buffer.put(keyBytes); // Key itself
+		}
+	
+		if (leaf) {
+			for (V value : values) {
+				byte[] valueBytes = value.toString().getBytes();
+				buffer.putInt(valueBytes.length); // Length of value
+				buffer.put(valueBytes); // Value itself
+			}
+		} else {
+			for (Integer child : children) {
+				buffer.putInt(child); // Child node number
+			}
+		}
 	}
+	
+	
 }
